@@ -1,0 +1,41 @@
+FROM liambindle/penelope:0.1.0-centos7
+LABEL maintainer="Shin Leong <sleong@wustl.edu>"
+
+LABEL version="2019 Update5"
+LABEL description="Parallel Studio XE 2019 Update5 Cluster Edition"
+
+COPY parallel_studio_xe_2019_update5_cluster_edition/rpm /src/rpm
+COPY parallel_studio_xe_2019_update5_cluster_edition/PUBLIC_KEY.PUB /src/rpm
+RUN yum update -y && yum install -y yum-utils file && \
+    yum-config-manager --add-repo file:///src/rpm && \
+    rpm --import /src/rpm/PUBLIC_KEY.PUB && \
+    yum install -y intel-parallel-studio-xe-cluster-edition && \
+    yum-config-manager --disable src_rpm && yum clean all && rm -fr /src/rpm
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/intel/bin:/spack/bin
+COPY licenses /opt/intel/licenses
+RUN /spack/bin/spack compiler find /opt/intel/bin && \
+    /spack/bin/spack install netcdf-fortran % $(/spack/bin/spack compiler list | grep "^intel") ^ netcdf % $(/spack/bin/spack compiler list | grep "^intel") -mpi
+
+# Build
+# =====
+# docker build --tag parallel-studio-xe-netcdf-fortran-without-mpi .
+#
+# Usage
+# =====
+# docker run -it --rm -v /your/licenses:/opt/intel/licenses parallel-studio-xe-netcdf-fortran-without-mpi /bin/bash
+#
+# Note: You can specify the licences with in the container with the directory listed below.
+#       The above example add the "/your/licenses" directory to "/opt/intel/licences" in
+#       the container.  You can use any directory below instead of "/opt/intel/licences"
+#       in the container.
+#
+# License file(s) used were (in this order):
+# **  1.  /opt/intel/compilers_and_libraries_2019.5.281/linux/bin/intel64/../../Licenses
+# **  2.  /root/Licenses
+# **  3.  /root/intel/licenses
+# **  4.  /opt/intel/licenses
+# **  5.  /Users/Shared/Library/Application Support/Intel/Licenses
+# **  6.  /opt/intel/compilers_and_libraries_2019.5.281/linux/bin/intel64/*.lic
+# 
+# Please refer http://software.intel.com/sites/support/ for more information..
+

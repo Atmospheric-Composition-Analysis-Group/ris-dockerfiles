@@ -1,0 +1,49 @@
+FROM registry.gsc.wustl.edu/sleong/parallel-studio-xe-netcdf-fortran-without-mpi
+LABEL maintainer="Shin Leong <sleong@wustl.edu>"
+
+LABEL version="2019 Update5"
+LABEL description="Parallel Studio XE 2019 Update5 Cluster Edition"
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/intel/bin:/spack/bin:/opt/geos-chem/bin
+
+COPY licenses /opt/intel/licenses
+RUN export NETCDF_HOME=$(spack location -i netcdf) && \
+    export GC_BIN=$NETCDF_HOME/bin && \
+    export GC_INCLUDE=$NETCDF_HOME/include && \
+    export GC_LIB=$NETCDF_HOME/lib && \
+    export NETCDF_FORTRAN_HOME=$(spack location -i netcdf-fortran) && \
+    export GC_F_BIN=$NETCDF_FORTRAN_HOME/bin && \
+    export GC_F_INCLUDE=$NETCDF_FORTRAN_HOME/include && \
+    export GC_F_LIB=$NETCDF_FORTRAN_HOME/lib && \
+    export NETCDF_HOME=$(spack location -i netcdf) && \
+    export NETCDF_FORTRAN_HOME=$(spack location -i netcdf-fortran) && \
+    cd /tmp/ && git clone https://github.com/geoschem/geos-chem.git && \
+    cd geos-chem && git checkout -b 12.6.1 12.6.1 && \
+    mkdir build && cd build && \
+    /opt/cmake/bin/cmake .. -DRUNDIR=IGNORE -DRUNDIR_SIM=standard -DCMAKE_COLOR_MAKEFILE=FALSE && \
+    make -j4 CHEM=Tropchem CHEM=soa_svpoa && mkdir -p /opt/geos-chem/bin && \
+    cp GeosCore/*.a /opt/geos-chem/bin && cp GeosCore/geos /opt/geos-chem/bin
+
+
+# Build
+# =====
+# docker build --tag geos-chem .
+#
+# Usage
+# =====
+# docker run -it --rm -v /your/licenses:/opt/intel/licenses geos-chem /bin/bash
+#
+# Note: You can specify the licences with in the container with the directory listed below.
+#       The above example add the "/your/licenses" directory to "/opt/intel/licences" in
+#       the container.  You can use any directory below instead of "/opt/intel/licences"
+#       in the container.
+#
+# License file(s) used were (in this order):
+# **  1.  /opt/intel/compilers_and_libraries_2019.5.281/linux/bin/intel64/../../Licenses
+# **  2.  /root/Licenses
+# **  3.  /root/intel/licenses
+# **  4.  /opt/intel/licenses
+# **  5.  /Users/Shared/Library/Application Support/Intel/Licenses
+# **  6.  /opt/intel/compilers_and_libraries_2019.5.281/linux/bin/intel64/*.lic
+# 
+# Please refer http://software.intel.com/sites/support/ for more information..
+
